@@ -1,7 +1,7 @@
-package ua.com.alevel.app.util;
+package ua.com.alevel.app.mapper;
 
 import ua.com.alevel.app.annotation.CsvField;
-import ua.com.alevel.app.table.CsvTable;
+import ua.com.alevel.app.parser.CsvParser;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -9,27 +9,27 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InitUtils {
+public class CsvMapper {
 
-    public <T> List<T> initialize(Class<T> c, CsvTable table) {
+    public <T> List<T> initialize(Class<T> c, CsvParser parser) {
         List<T> instances = new ArrayList<>();
-        for (int i = 0; i < table.getValues().size(); i++) {
-            try{
+        for (int i = 0; i < parser.size(); i++) {
+            try {
                 Constructor<T> constructor = c.getConstructor();
                 T instance = constructor.newInstance();
 
-                Field[] fields = c.getDeclaredFields();
-                for (Field field : fields) {
-                    if(!field.isAnnotationPresent(CsvField.class)){
+                for (Field field : c.getDeclaredFields()) {
+                    if (!field.isAnnotationPresent(CsvField.class)) {
                         continue;
                     }
-                    CsvField csvField = field.getAnnotation(CsvField.class);
 
+                    CsvField csvField = field.getAnnotation(CsvField.class);
                     String name = csvField.name();
-                    if(!table.getHeaders().contains(name)){
+                    String value = parser.get(name, i);
+                    if (value == null) {
                         continue;
                     }
-                    String value = table.get(i, name);
+
                     Class<?> typeOfField = field.getType();
 
                     if(typeOfField == boolean.class || typeOfField == Boolean.class) {
@@ -57,8 +57,8 @@ public class InitUtils {
                     }
                 }
                 instances.add(instance);
-            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ex) {
-                throw new RuntimeException(ex);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
             }
         }
         return instances;

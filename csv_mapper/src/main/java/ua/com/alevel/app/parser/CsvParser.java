@@ -4,7 +4,9 @@ import java.util.List;
 
 public interface CsvParser {
 
-    String[] getHeaders();
-
-    List<String[]> getValues();
+    void readData(String path);
+    String get(int column, int row);
+    String get(String key, int row);
+    List<String> getHeaders();
+    int size();
 }
